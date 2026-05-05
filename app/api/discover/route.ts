@@ -37,7 +37,13 @@ export async function GET(request: NextRequest) {
     uploadedAt: file.uploadedAt,
   }));
 
-  return NextResponse.json({ devices, files });
+  return NextResponse.json({ devices, files }, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -50,7 +56,24 @@ export async function POST(request: NextRequest) {
     lastSeen: Date.now()
   });
 
-  return NextResponse.json({ success: true, id: deviceId });
+  return NextResponse.json({ success: true, id: deviceId }, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
 
 // Export file registry for other routes

@@ -20,7 +20,6 @@ function ReceiverContent() {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [downloading, setDownloading] = useState<string | null>(null);
 
   // Auto-fill IP from URL or detection
   useEffect(() => {
@@ -30,7 +29,7 @@ function ReceiverContent() {
       setTimeout(() => discoverFiles(hostParam), 500);
     } else {
       const host = window.location.hostname;
-      if (host !== 'localhost') {
+      if (host !== 'localhost' && !host.includes('.local')) {
         setIpAddress(host);
       }
     }
@@ -44,6 +43,7 @@ function ReceiverContent() {
     setError('');
     
     try {
+      // Use full URL to avoid CORS issues if on different host
       const res = await fetch(`http://${targetIp}:${port}/api/discover`);
       if (!res.ok) throw new Error('Host tidak ditemukan');
       const data = await res.json();
@@ -56,29 +56,6 @@ function ReceiverContent() {
       setFiles([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const downloadFile = async (fileId: string, fileName: string) => {
-    setDownloading(fileId);
-    
-    try {
-      const res = await fetch(`http://${ipAddress}:${port}/api/files/${fileId}`);
-      if (!res.ok) throw new Error('Download gagal');
-      
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      alert('Gagal mengunduh file. Coba lagi.');
-    } finally {
-      setDownloading(null);
     }
   };
 
@@ -153,13 +130,14 @@ function ReceiverContent() {
                   <p className="font-medium text-slate-700">{file.name}</p>
                   <p className="text-sm text-slate-500">{formatSize(file.size)}</p>
                 </div>
-                <button
-                  onClick={() => downloadFile(file.id, file.name)}
-                  disabled={downloading === file.id}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                {/* Use <a> tag with download attribute for better mobile support */}
+                <a
+                  href={`http://${ipAddress}:${port}/api/files/${file.id}`}
+                  download={file.name}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
                 >
-                  {downloading === file.id ? 'Downloading...' : 'Download'}
-                </button>
+                  Download
+                </a>
               </li>
             ))}
           </ul>
