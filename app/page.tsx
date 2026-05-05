@@ -20,6 +20,8 @@ export default function Home() {
   const wsRef = useRef<WebSocket | null>(null);
   const scanAngleRef = useRef(0);
   const [scanAngle, setScanAngle] = useState(0);
+  const [myIp, setMyIp] = useState<string>('');
+  const [ipCopied, setIpCopied] = useState(false);
 
   // Generate random position for devices on radar
   const positionDevices = useCallback((deviceList: Device[]) => {
@@ -108,6 +110,7 @@ export default function Home() {
           
           if (candidate) {
             const ip = candidate[1];
+            setMyIp(ip); // Store full IP
             const parts = ip.split('.');
             resolve(`${parts[0]}.${parts[1]}.${parts[2]}`);
           } else {
@@ -118,6 +121,18 @@ export default function Home() {
       });
     } catch {
       return '192.168.1';
+    }
+  };
+
+  // Copy IP to clipboard
+  const copyMyIp = async () => {
+    if (!myIp) return;
+    try {
+      await navigator.clipboard.writeText(myIp);
+      setIpCopied(true);
+      setTimeout(() => setIpCopied(false), 2000);
+    } catch (e) {
+      console.error('Failed to copy IP:', e);
     }
   };
 
@@ -163,7 +178,7 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 p-6 flex justify-between items-center">
+      <header className="relative z-10 p-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,12 +191,30 @@ export default function Home() {
           </div>
         </div>
         
-        <button
-          onClick={() => setShowRegister(true)}
-          className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          {myDevice.name || 'Set Device Name'}
-        </button>
+        <div className="flex items-center space-x-3">
+          {myIp && (
+            <div className="bg-slate-900 border border-slate-700 rounded-lg overflow-hidden flex items-center shadow-lg">
+              <div className="px-3 py-2 text-xs font-mono text-slate-400 border-r border-slate-700">
+                MY IP: <span className="text-emerald-400">{myIp}</span>
+              </div>
+              <button
+                onClick={copyMyIp}
+                className={`px-3 py-2 text-xs font-bold transition-colors ${
+                  ipCopied ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-white hover:bg-slate-700'
+                }`}
+              >
+                {ipCopied ? 'COPIED!' : 'COPY'}
+              </button>
+            </div>
+          )}
+          
+          <button
+            onClick={() => setShowRegister(true)}
+            className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-700 shadow-lg"
+          >
+            {myDevice.name || 'Set Device Name'}
+          </button>
+        </div>
       </header>
 
       {/* Registration Modal */}
