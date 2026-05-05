@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFileRegistry } from '../discover/route';
+import { getFileRegistry } from '../../discover/route';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,9 @@ export async function GET(
   }
 
   // Return file as downloadable
-  return new NextResponse(file.data, {
+  // Convert Buffer to Uint8Array for NextResponse compatibility
+  const uint8Array = new Uint8Array(file.data);
+  return new NextResponse(uint8Array, {
     headers: {
       'Content-Type': 'application/octet-stream',
       'Content-Disposition': `attachment; filename="${file.name}"`,
